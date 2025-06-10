@@ -1,0 +1,148 @@
+---
+description: Please follow project rules
+globs: 
+alwaysApply: false
+---
+## Project Overview
+
+* **Type:** Digital engagement platform (Bucket & MediaID)
+* **Description:** A digital engagement platform connecting artists and fans with privacy-focused brand collaborations.
+* **Primary Goal:** Enable artists to monetize creative work while preserving user privacy via MediaID
+
+## Project Structure
+
+### Framework-Specific Routing
+
+* **Directory Rules:**
+  * React Router 6: Use `src/routes/` with `createBrowserRouter` and file-based route modules.
+  * Example: `src/routes/login.tsx` maps to `/login`
+  * Example: `src/routes/artists/$artistId.tsx` maps to `/artists/:artistId`
+
+### Core Directories
+
+* **Versioned Structure:**
+  * src/components: Reusable React functional components
+  * src/styles: Tailwind CSS configuration and base styles
+  * src/lib: Third-party client instances (e.g., Supabase, Stripe SDK)
+  * src/hooks: Custom React hooks (e.g., useAuth, useMediaIDPreferences)
+  * src/utils: Utility functions (e.g., formatDate, permission checks)
+  * src/routes: Route modules and layouts
+
+### Key Files
+
+* **Stack-Versioned Patterns:**
+  * src/App.tsx: Root application with `BrowserRouter` and global providers
+  * src/index.tsx: React 18 entry point with `createRoot`
+  * tailwind.config.js: Tailwind CSS v3 JIT mode enabled
+  * src/lib/supabaseClient.ts: Supabase JS v2 initialization
+  * src/lib/stripeClient.ts: Stripe JS v1 `loadStripe` instance
+
+## Tech Stack Rules
+
+* **Version Enforcement:**
+  * react@18: Use React Hooks and functional components only; avoid class components
+  * react-router-dom@6: Use `createBrowserRouter` and `RouterProvider`; no deprecated `Switch`
+  * tailwindcss@^3.0: Enable JIT mode; configure `content` paths in `tailwind.config.js`
+  * framer-motion@^7.0: Import `motion` components and use `useAnimation` for transitions
+  * @supabase/supabase-js@2: Use modular imports and typed responses; enforce RLS on Supabase
+  * stripe-js@1: Use `loadStripe` to initialize; integrate Stripe Checkout in `checkout` route
+  * postgres (v14+): Use SQL migrations; enforce schema in version control
+  * oauth2-client (latest): Centralize token management in `src/lib/auth.ts`
+  * shopify-sdk@latest: Use GraphQL Admin API with secure OAuth flow
+  * spotify-web-api-node@5: Throttle calls; use refresh token flow
+  * analytics (GA4/API & Mixpanel@latest): Initialize once in `src/lib/analytics.ts`; respect user consent
+
+## PRD Compliance
+
+* "Maintain user privacy via MediaID.": Enforce granular permission controls and RLS at every data access layer.
+
+## App Flow Integration
+
+* **Stack-Aligned Flow:**
+  * Auth Flow → `src/routes/login.tsx` uses Supabase `signInWithOAuth`
+  * Artist Locker → `src/routes/locker.tsx` fetches protected files via Supabase storage
+  * Subscription Flow → `src/routes/subscribe.tsx` triggers Stripe Checkout session
+  * Brand Campaign → `src/routes/dashboard/brands.tsx` uses segmented interest tags from MediaID
+
+## Best Practices
+
+* React
+  * Use functional components and React Hooks exclusively
+  * Co-locate component styles with Tailwind utility classes
+  * Split code with React.lazy and Suspense for large modules
+
+* Tailwind CSS
+  * Enable JIT mode and purge unused styles via `content` paths
+  * Use `@apply` sparingly for reusable patterns
+  * Customize theme colors to match black/light grey/white/tan aesthetics
+
+* Framer Motion
+  * Use `motion` for entrance/exit animations; prefer `variants` for clean code
+  * Avoid heavy animations on large lists to maintain performance
+  * Use `useReducedMotion` to respect user system preferences
+
+* Supabase
+  * Enforce Row-Level Security (RLS) on all tables
+  * Use Postgres functions for complex permission checks
+  * Keep database migrations in sync with code in `db/migrations`
+
+* PostgreSQL
+  * Use SQL migration tools (e.g., Flyway or Supabase Migrations)
+  * Enforce data types and constraints at the schema level
+  * Index frequently queried columns (e.g., user_id, campaign_id)
+
+* Stripe
+  * Use webhooks to reconcile subscription status server-side
+  * Validate webhook signatures to prevent replay attacks
+  * Handle pricing tiers and trial periods in metadata
+
+* OAuth2
+  * Centralize token refresh logic in `src/lib/auth.ts`
+  * Store tokens in secure HTTP-only cookies or local storage based on sensitivity
+  * Implement CSRF protection on OAuth callbacks
+
+* Shopify
+  * Use offline and online access tokens correctly per shop context
+  * Validate webhook topics and HMAC signatures
+  * Batch GraphQL queries to reduce API calls
+
+* Spotify
+  * Use `authorization_code` flow for user data access
+  * Cache tokens securely and refresh before expiry
+  * Respect rate limits and backoff on 429 responses
+
+* Google Analytics & Mixpanel
+  * Initialize analytics in a single module with guard for user consent
+  * Anonymize IPs and respect GDPR/CCPA consent states
+  * Use event batching to reduce payloads
+
+## Rules
+
+* Derive folder/file patterns directly from tech stack versions.
+* Enforce React Router 6 `src/routes/` structure; no legacy `Switch` or class components.
+* Configure Tailwind CSS v3 JIT; avoid unused CSS.
+* Keep Supabase RLS enabled; never bypass database security rules.
+* Centralize OAuth2 token management; never expose secrets in client code.
+* Use Stripe Checkout v1 via `loadStripe` and `useStripe` hooks.
+* Integrate analytics only after user consent.
+
+## Rules Metrics
+
+Before starting the project development, create a metrics file in the root of the project called
+
+`cursor_metrics.md`.
+
+### Instructions:
+
+* Each time a cursor rule is used as context, update `cursor_metrics.md`.
+
+* Use the following format for `cursor_metrics.md:` 
+Rules Metrics (h1)
+
+Usage (h2)
+
+The number of times rules is used as context
+
+* rule-name.mdc: 5
+* another-rule.mdc: 2
+* ...other rules
