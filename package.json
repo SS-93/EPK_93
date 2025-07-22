@@ -1,9 +1,36 @@
 {
+  "name": "bucket-mediaid-backend",
+  "version": "1.0.0",
+  "description": "Backend for Bucket & MediaID platform",
+  "main": "Index.js",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "dev": "supabase start",
+    "db:migrate": "node scripts/migrate.js",
+    "db:migrate:supabase": "supabase migration up",
+    "db:reset": "supabase db reset",
+    "db:status": "node -e \"require('./lib/database.ts').checkDatabaseConnection()\"",
+    "functions:serve": "supabase functions serve",
+    "functions:deploy": "supabase functions deploy",
+    "deploy": "supabase deploy",
+    "type-gen": "supabase gen types typescript --local > types/database.types.ts",
+    "test:db": "node -e \"require('dotenv').config(); console.log('DB URL:', process.env.DATABASE_URL ? 'Set' : 'Missing')\""
+  },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "postgres": "^3.4.7"
+    "postgres": "^3.4.7",
+    "stripe": "^14.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "supabase": "^1.226.4",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
