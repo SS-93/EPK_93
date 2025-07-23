@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- Create enum types for better data integrity
-CREATE TYPE user_role AS ENUM ('fan', 'artist', 'brand', 'admin');
+CREATE TYPE user_role AS ENUM ('fan', 'artist', 'brand', 'developer', 'admin');
 CREATE TYPE subscription_status AS ENUM ('active', 'canceled', 'paused', 'expired');
 CREATE TYPE content_type AS ENUM ('audio', 'video', 'image', 'document');
 CREATE TYPE campaign_status AS ENUM ('draft', 'active', 'paused', 'completed');
