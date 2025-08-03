@@ -19,64 +19,36 @@ export const authRoutes = {
 
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-      // Create user with Supabase Auth
+      // ✅ FIXED: Only create user - let trigger handle profile/MediaID
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email,
         password,
         email_confirm: false,
-        user_metadata: userData
+        user_metadata: userData  // ✅ Trigger will use this data
       })
 
       if (authError) throw authError
 
       const userId = authData.user.id
 
-      // Create profile entry
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          display_name: userData.display_name,
-          role: userData.role,
-          email_verified: false,
-          onboarding_completed: false
-        })
-
-      if (profileError) throw profileError
-
-      // Create MediaID entry
-      const { error: mediaIdError } = await supabase
-        .from('media_ids')
-        .insert({
-          user_uuid: userId,
-          interests: [],
-          genre_preferences: [],
-          content_flags: {},
-          privacy_settings: {
-            data_sharing: true,
-            location_access: false,
-            audio_capture: false,
-            anonymous_logging: true,
-            marketing_communications: false
-          }
-        })
-
-      if (mediaIdError) throw mediaIdError
-
-      // Create role-specific entry
+      // ✅ FIXED: Only create role-specific entries (not handled by trigger)
       if (userData.role === 'artist') {
-        await supabase.from('artists').insert({
+        const { error: artistError } = await supabase.from('artists').insert({
           user_id: userId,
           artist_name: userData.display_name,
           verification_status: 'pending'
         })
+        if (artistError) throw artistError
+        
       } else if (userData.role === 'brand') {
-        await supabase.from('brands').insert({
+        const { error: brandError } = await supabase.from('brands').insert({
           user_id: userId,
           brand_name: userData.display_name,
           contact_email: email
         })
+        if (brandError) throw brandError
       }
+      // ✅ Added: developer and admin roles work with just profile/MediaID
 
       return createSuccessResponse({
         user: authData.user,
