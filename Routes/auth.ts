@@ -1,11 +1,26 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from '@supabase/supabase-js'
 import { corsHeaders } from '../middleware/cors.ts'
 import { validateRequest } from '../middleware/validation.ts'
 import { createErrorResponse, createSuccessResponse } from '../utils/responses.ts'
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+// ✅ FIXED: Better error handling for Vercel
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Missing Supabase environment variables. Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in your Vercel environment variables.'
+  )
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
 export const authRoutes = {
   // POST /auth/signup
@@ -16,8 +31,6 @@ export const authRoutes = {
         password: 'string',
         userData: 'object'
       })
-
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
       // ✅ FIXED: Only create user - let trigger handle profile/MediaID
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -56,6 +69,15 @@ export const authRoutes = {
       }, 201)
 
     } catch (error) {
+      // ✅ FIXED: Better Vercel-compatible error messages
+      if (error.message?.includes('placeholder') || error.message?.includes('NAME_NOT_RESOLVED')) {
+        return { 
+          data: null, 
+          error: { 
+            message: 'Environment configuration error. Please check your Vercel environment variables for REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY.' 
+          } 
+        }
+      }
       return createErrorResponse(error.message, 400)
     }
   },
@@ -67,8 +89,6 @@ export const authRoutes = {
         email: 'string',
         password: 'string'
       })
-
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -95,8 +115,6 @@ export const authRoutes = {
         refresh_token: 'string'
       })
 
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
       const { data, error } = await supabase.auth.refreshSession({
         refresh_token
       })
@@ -119,15 +137,69 @@ export const authRoutes = {
       const authHeader = req.headers.get('Authorization')
       if (!authHeader) throw new Error('No authorization header')
 
-      const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-        global: { headers: { Authorization: authHeader } }
-      })
-
       const { error } = await supabase.auth.signOut()
       if (error) throw error
 
       return createSuccessResponse({
         message: 'Logout successful'
+      })
+
+    } catch (error) {
+      return createErrorResponse(error.message, 400)
+    }
+  },
+
+  // POST /auth/oauth/:provider
+  async oauth(req: Request): Promise<Response> {
+    try {
+      const { provider } = await validateRequest(req, {
+        provider: 'string'
+      })
+
+      // ✅ FIXED: Better redirect handling for Vercel
+      const redirectTo = process.env.NODE_ENV === 'production' 
+        ? `https://your-vercel-domain.vercel.app/onboarding`
+        : `${window.location.origin}/onboarding`
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo }
+      })
+
+      if (error) throw error
+
+      return createSuccessResponse({
+        session: data.session,
+        message: 'OAuth login successful'
+      })
+
+    } catch (error) {
+      return createErrorResponse(error.message, 400)
+    }
+  },
+
+  // POST /auth/signin/:provider
+  async signInWithOAuth(req: Request): Promise<Response> {
+    try {
+      const { provider } = await validateRequest(req, {
+        provider: 'string'
+      })
+
+      // ✅ FIXED: Better redirect handling for Vercel
+      const redirectTo = process.env.NODE_ENV === 'production' 
+        ? `https://your-vercel-domain.vercel.app/onboarding`
+        : `${window.location.origin}/onboarding`
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo }
+      })
+
+      if (error) throw error
+
+      return createSuccessResponse({
+        session: data.session,
+        message: 'OAuth sign-in successful'
       })
 
     } catch (error) {

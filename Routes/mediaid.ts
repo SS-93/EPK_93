@@ -5,7 +5,8 @@ import { validateRequest } from '../middleware/validation.ts'
 import { createErrorResponse, createSuccessResponse, createNotFoundResponse } from '../utils/responses.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''  
+
 
 export const mediaIdRoutes = {
   // GET /mediaid/preferences
