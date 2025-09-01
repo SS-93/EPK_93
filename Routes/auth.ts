@@ -4,21 +4,20 @@ import { corsHeaders } from '../middleware/cors.ts'
 import { validateRequest } from '../middleware/validation.ts'
 import { createErrorResponse, createSuccessResponse } from '../utils/responses.ts'
 
-// ✅ FIXED: Better error handling for Vercel
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY
+// ✅ FIXED: Backend uses service role key for admin operations
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error(
-    'Missing Supabase environment variables. Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in your Vercel environment variables.'
+    'Missing Supabase environment variables. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY for backend operations.'
   )
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
+    autoRefreshToken: false,
+    persistSession: false
   }
 })
 
@@ -69,14 +68,12 @@ export const authRoutes = {
       }, 201)
 
     } catch (error) {
-      // ✅ FIXED: Better Vercel-compatible error messages
+      // ✅ FIXED: Better backend error messages
       if (error.message?.includes('placeholder') || error.message?.includes('NAME_NOT_RESOLVED')) {
-        return { 
-          data: null, 
-          error: { 
-            message: 'Environment configuration error. Please check your Vercel environment variables for REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY.' 
-          } 
-        }
+        return createErrorResponse(
+          'Environment configuration error. Please check your backend environment variables for SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.',
+          500
+        )
       }
       return createErrorResponse(error.message, 400)
     }
@@ -156,10 +153,10 @@ export const authRoutes = {
         provider: 'string'
       })
 
-      // ✅ FIXED: Better redirect handling for Vercel
-      const redirectTo = process.env.NODE_ENV === 'production' 
-        ? `https://your-vercel-domain.vercel.app/onboarding`
-        : `${window.location.origin}/onboarding`
+      // ✅ FIXED: Better redirect handling using APP_URL
+      const redirectTo = process.env.APP_URL 
+        ? `${process.env.APP_URL}/onboarding`
+        : `http://localhost:3000/onboarding`
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -169,8 +166,9 @@ export const authRoutes = {
       if (error) throw error
 
       return createSuccessResponse({
-        session: data.session,
-        message: 'OAuth login successful'
+        url: data.url,
+        provider: data.provider,
+        message: 'OAuth login initiated'
       })
 
     } catch (error) {
@@ -185,10 +183,10 @@ export const authRoutes = {
         provider: 'string'
       })
 
-      // ✅ FIXED: Better redirect handling for Vercel
-      const redirectTo = process.env.NODE_ENV === 'production' 
-        ? `https://your-vercel-domain.vercel.app/onboarding`
-        : `${window.location.origin}/onboarding`
+      // ✅ FIXED: Better redirect handling using APP_URL
+      const redirectTo = process.env.APP_URL 
+        ? `${process.env.APP_URL}/onboarding`
+        : `http://localhost:3000/onboarding`
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -198,8 +196,9 @@ export const authRoutes = {
       if (error) throw error
 
       return createSuccessResponse({
-        session: data.session,
-        message: 'OAuth sign-in successful'
+        url: data.url,
+        provider: data.provider,
+        message: 'OAuth sign-in initiated'
       })
 
     } catch (error) {

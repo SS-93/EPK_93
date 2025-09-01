@@ -1,0 +1,149 @@
+---
+description: Apply these rules when creating the project
+globs:
+alwaysApply: true
+---
+## Project Overview
+
+*   **Type:** Event Management & Voting Platform
+*   **Description:** Develop an Event Management & Voting Platform enabling hosts to create live voting events that users can join via SMS.
+*   **Primary Goal:** Enable low-friction SMS-based event voting with role-aware access and lightweight CRM integration.
+
+## Project Structure
+
+### Framework-Specific Routing
+
+*   **Directory Rules:**
+
+    *   React Router 6: `src/routes/` using `createBrowserRouter`. Each route folder contains a `route.tsx` or `index.tsx` plus optional `loader`/`action` files.
+    *   Example 1: "Next.js 14 (App Router)" → `app/[route]/page.tsx` conventions
+    *   Example 2: "Next.js (Pages Router)" → `pages/[route].tsx` pattern
+    *   Example 3: "React Router 6" → `src/routes/host/create-event.tsx`, `src/routes/fan/vote.tsx`, etc.
+
+### Core Directories
+
+*   **Versioned Structure:**
+
+    *   `src/routes`: React Router 6 route modules (v6.14+)
+    *   `src/components`: Shared React components styled with Styled-Components v5
+    *   `src/hooks`: Custom hooks (i18next v22 integration, polling hooks)
+    *   `server/src`: Node.js v18 (Express v4) controllers, services, and middleware
+    *   `migrations` or `prisma`: PostgreSQL v14 schema and migration files
+    *   `infrastructure`: AWS CDK / CloudFormation definitions for EC2, RDS, S3, CloudFront
+
+### Key Files
+
+*   **Stack-Versioned Patterns:**
+
+    *   `src/routes/host/create-event.tsx`: "React Router 6 route for event creation wizard"
+    *   `src/routes/fan/vote.tsx`: "React Router 6 single-round voting page"
+    *   `server/src/index.ts`: "Node.js v18 Express server entrypoint"
+    *   `server/src/routes/api/events.ts`: "Express v4 API route for event CRUD operations"
+    *   `server/src/routes/api/vote.ts`: "Express v4 POST endpoint for vote submission"
+
+## Tech Stack Rules
+
+*   **Version Enforcement:**
+
+    *   react@18: Use React 18 StrictMode and concurrent features; hooks only.
+    *   react-router@6.14: Enforce `createBrowserRouter` and data APIs (`loader`/`action`).
+    *   typescript@5: `strict` mode enabled, noImplicitAny.
+    *   styled-components@5: Enable Babel plugin for better class names.
+    *   i18next@22: Namespace-based translation files; fallback to English.
+    *   node@18: ES Modules with top-level await for database init.
+    *   express@4: Separate routes and controllers; use `express.Router()`.
+    *   pg@8 & prisma@4: Connection pooling and migrations.
+    *   aws-cdk@2: CDK constructs for infra; no hard-coded credentials.
+    *   twilio@4: Abstract SMS service interface.
+    *   @sendgrid/mail@7: Use templating for transactional emails.
+    *   mixpanel-browser@2: Standardize event names; batch flush.
+    *   gtag.js (GA4): Enforce dataLayer pushes for pageviews and custom events.
+
+## PRD Compliance
+
+*   **Non-Negotiable:**
+
+    *   "Privacy: Sponsor reporting aggregate-only (no individual data)": All sponsor-facing analytics APIs must return only aggregated metrics.
+    *   "Languages: English and Spanish required for MVP": No other locales permitted until post-MVP.
+
+## App Flow Integration
+
+*   **Stack-Aligned Flow:**
+
+    *   Host Flow → `src/routes/host/create-event.tsx` uses React Router v6 `action` for wizard form submissions.
+    *   Fan SMS Join → Backend Twilio webhook at `server/src/routes/api/sms-join.ts` triggers user creation and returns voting link.
+    *   Voting Flow → `src/routes/fan/vote.tsx` uses `loader` to fetch event config, polls leaderboard every 5s.
+    *   Artist Onboarding → `src/routes/artist/claim-profile.tsx` with email verification via SendGrid.
+    *   Developer API → `server/src/routes/api/webhooks.ts` for external integrations.
+
+## Best Practices
+
+*   React (v18)
+    *   Use functional components, hooks, and React Context sparingly.
+    *   Leverage React Router data APIs for data fetching per route.
+    *   Wrap app in `<Suspense>` and `<ErrorBoundary>` for lazy routes.
+
+*   Styled-Components (v5)
+    *   Use a global theme via `<ThemeProvider>`.
+    *   Strictly namespace global styles to avoid collisions.
+    *   Prefer `styled()` over inline CSS props.
+
+*   i18next (v22)
+    *   Split translations by namespace (e.g., `host.json`, `fan.json`).
+    *   Load only required namespaces per route.
+    *   Fallback missing keys to English with clear warnings.
+
+*   Node.js & Express
+    *   Structure code in layers: controllers → services → data access.
+    *   Validate all inputs with Zod or Joi.
+    *   Centralize error handling and logging (Winston/CloudWatch).
+
+*   PostgreSQL (v14)
+    *   Use Prisma or Knex for type-safe queries and migrations.
+    *   Index all foreign keys and frequently queried columns.
+    *   Enable connection pooling (pg-pool).
+
+*   AWS CDK (v2)
+    *   Declare all infra in IaC.
+    *   Store secrets in AWS Parameter Store or Secrets Manager.
+    *   Use CloudFront for CDN in front of S3‐hosted assets.
+
+*   Twilio (v4)
+    *   Encapsulate SMS logic behind an interface for future provider swaps.
+    *   Handle delivery callbacks asynchronously.
+
+*   SendGrid (v7) / Mailgun
+    *   Use dynamic templates for email personalization.
+    *   Implement retry logic on 5xx errors.
+
+*   Analytics: Mixpanel & Google Analytics
+    *   Define a naming convention for events and properties.
+    *   Batch and debounce tracking calls to avoid rate limits.
+    *   Load analytics libraries asynchronously.
+
+## Rules
+
+*   Derive folder/file patterns directly from `techStackDoc` versions.
+*   If using React Router 6: Enforce `src/routes/` with data APIs, no legacy `<Switch>` or `withRouter`.
+*   Never mix Next.js routing patterns with React Router projects.
+*   Ensure backend and frontend code live in separate top-level folders (`server/` vs `src/`).
+*   All route modules must export `loader`/`action` or equivalent, never inline fetches in components.
+
+## Rules Metrics
+
+Before starting the project development, create a metrics file in the root of the project called `cursor_metrics.md`.
+
+### Instructions:
+
+*   Each time a cursor rule is used as context, update `cursor_metrics.md`.
+*   Use the following format for `cursor_metrics.md`:
+
+# Rules Metrics
+
+## Usage
+
+The number of times rules is used as context
+
+*   rule-name.mdc: 5
+*   another-rule.mdc: 2
+*   ...other rules
