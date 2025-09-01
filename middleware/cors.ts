@@ -1,4 +1,4 @@
-const allowedOrigins = (Deno.env.get('CORS_ORIGINS') || 'http://localhost:3000').split(',')
+const allowedOrigins = (Deno.env.get('CORS_ORIGINS') || 'http://localhost:3000,https://buckets.media').split(',')
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,6 +33,11 @@ export function addCorsHeaders(response: Response): Response {
   Object.entries(corsHeaders).forEach(([key, value]) => {
     headers.set(key, value)
   })
+  // If wildcard not desired, set the origin dynamically when known safe
+  const requestOrigin = headers.get('Origin')
+  if (!allowedOrigins.includes('*') && requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    headers.set('Access-Control-Allow-Origin', requestOrigin)
+  }
   
   return new Response(response.body, {
     status: response.status,

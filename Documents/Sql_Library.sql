@@ -74,6 +74,7 @@ ALTER TABLE media_ids
 ADD COLUMN IF NOT EXISTS role user_role NOT NULL DEFAULT 'fan',
 ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1,
 ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true;
+-- placement note: satisfies RLS updates that check is_active; no separate migration needed if this library is primary
 
 -- Drop old constraint if exists
 ALTER TABLE media_ids DROP CONSTRAINT IF EXISTS media_ids_user_uuid_key;
@@ -130,6 +131,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   updated_at TIMESTAMP DEFAULT now(),
   UNIQUE(fan_id, artist_id)
 );
+-- placement note: ensure webhook handlers persist price_cents; otherwise add a follow-up migration to drop NOT NULL
 
 CREATE TABLE IF NOT EXISTS content_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

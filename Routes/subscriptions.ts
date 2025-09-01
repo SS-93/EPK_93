@@ -256,22 +256,32 @@ async function handleCheckoutCompleted(session: any, supabase: any) {
   const tier = session.metadata.tier
   const subscriptionId = session.subscription
 
-  // Create or update subscription
+  // Fetch Stripe subscription to persist price_cents
+  const subscriptionResp = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}?expand[]=items.data.price`, {
+    headers: { 'Authorization': `Bearer ${stripeSecretKey}` }
+  })
+  if (!subscriptionResp.ok) throw new Error('Failed to fetch Stripe subscription')
+  const subscription = await subscriptionResp.json()
+  const priceCents = subscription?.items?.data?.[0]?.price?.unit_amount || null
+
+  // Create or update subscription with price_cents
   await supabase
     .from('subscriptions')
     .upsert({
       fan_id: userId,
       artist_id: artistId,
       tier,
+      price_cents: priceCents,
       status: 'active',
       stripe_subscription_id: subscriptionId,
       current_period_start: new Date().toISOString(),
-      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
-    })
+      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    }, { onConflict: 'fan_id,artist_id' })
 }
 
 async function handlePaymentSucceeded(invoice: any, supabase: any) {
   const subscriptionId = invoice.subscription
+  const priceCents = invoice?.lines?.data?.[0]?.price?.unit_amount || null
 
   // Update subscription period
   const { data: subscription } = await supabase
@@ -285,6 +295,7 @@ async function handlePaymentSucceeded(invoice: any, supabase: any) {
       .from('subscriptions')
       .update({
         status: 'active',
+        ...(priceCents != null ? { price_cents: priceCents } : {}),
         current_period_start: new Date(invoice.period_start * 1000).toISOString(),
         current_period_end: new Date(invoice.period_end * 1000).toISOString()
       })
