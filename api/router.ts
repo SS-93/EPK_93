@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { handleCors, addCorsHeaders } from '../middleware/cors.ts'
-import { createErrorResponse, createNotFoundResponse } from '../utils/responses.ts'
+import { createErrorResponse, createNotFoundResponse, createSuccessResponse } from '../utils/responses.ts'
 import { authRoutes } from '../Routes/auth.ts'
 import { subscriptionRoutes } from '../Routes/subscriptions.ts'
 import { mediaIdRoutes } from '../Routes/mediaid.ts'
+import { contentRoutes } from '../Routes/content.ts'
 
 interface RouteHandler {
   [key: string]: (req: Request, ...params: string[]) => Promise<Response>
@@ -12,7 +13,8 @@ interface RouteHandler {
 const routes: { [key: string]: RouteHandler } = {
   '/auth': authRoutes,
   '/subscriptions': subscriptionRoutes,
-  '/mediaid': mediaIdRoutes
+  '/mediaid': mediaIdRoutes,
+  '/content': contentRoutes
 }
 
 export async function handleRequest(req: Request): Promise<Response> {
@@ -55,6 +57,9 @@ export async function handleRequest(req: Request): Promise<Response> {
         break
       case '/mediaid':
         response = await routeMediaId(req, method, subPath)
+        break
+      case '/content':
+        response = await routeContent(req, method, subPath)
         break
       default:
         response = createNotFoundResponse('API endpoint')
@@ -130,6 +135,59 @@ async function routeMediaId(req: Request, method: string, subPath: string): Prom
     default:
       return createNotFoundResponse('MediaID endpoint')
   }
+}
+
+async function routeContent(req: Request, method: string, subPath: string): Promise<Response> {
+  const parts = subPath.split('/');
+  
+  switch (method) {
+    case 'put':
+      if (parts.length === 2 && parts[1] === 'metadata') {
+        return contentRoutes.updateMetadata(req, parts[0]);
+      }
+      if (parts.length === 2) {
+        return contentRoutes.updateAlbum(req, parts[0]);
+      }
+      break;
+    case 'get':
+      if (parts.length === 2 && parts[1] === 'metadata') {
+        return contentRoutes.getMetadata(req, parts[0]);
+      }
+      if (subPath === 'albums') {
+        return contentRoutes.getAlbums(req);
+      }
+      if (parts.length === 2 && parts[1] === 'tracks') {
+        return contentRoutes.getAlbumTracks(req, parts[0]);
+      }
+      if (subPath === 'bsl/eligible') {
+        return contentRoutes.checkBSLEligibility(req);
+      }
+      if (subPath === 'bsl/tracks') {
+        return contentRoutes.getBSLTracks(req);
+      }
+      break;
+    case 'post':
+      if (subPath === 'albums') {
+        return contentRoutes.createAlbum(req);
+      }
+      if (parts.length === 2 && parts[1] === 'lyrics') {
+        return contentRoutes.addLyrics(req, parts[0]);
+      }
+      if (parts.length === 2 && parts[1] === 'visual-clip') {
+        return contentRoutes.addVisualClip(req, parts[0]);
+      }
+      if (subPath === 'bsl/enable') {
+        return contentRoutes.enableBSL(req);
+      }
+      break;
+    case 'delete':
+      if (parts.length === 1) {
+        return contentRoutes.deleteAlbum(req, parts[0]);
+      }
+      break;
+  }
+  
+  return createNotFoundResponse('Content endpoint');
 }
 
 // Start the server
