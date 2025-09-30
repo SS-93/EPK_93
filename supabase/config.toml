@@ -81,12 +81,7 @@ message_service_sid = ""
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
 auth_token = "env(TWILIO_AUTH_TOKEN)"
 
-[edge_functions]
-# Configure Edge Functions
-[functions.auth-signup]
-verify_jwt = false
-[functions.mediaid-setup]
-verify_jwt = true
+# Edge Functions configuration has been moved to individual function configs
 
 [analytics]
 enabled = false 
