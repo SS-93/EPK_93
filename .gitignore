@@ -1,0 +1,10 @@
+# Environment files
+.env
+.env.*
+*.env
+
+# Stripe/secrets docs
+Documents/STRIPE_TEST_ENV_FIX.md
+
+# Dependencies
+node_modules/

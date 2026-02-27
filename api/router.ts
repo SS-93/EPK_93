@@ -5,6 +5,7 @@ import { authRoutes } from '../Routes/auth.ts'
 import { subscriptionRoutes } from '../Routes/subscriptions.ts'
 import { mediaIdRoutes } from '../Routes/mediaid.ts'
 import { contentRoutes } from '../Routes/content.ts'
+import { stripeRoutes } from '../Routes/stripe.ts'
 
 interface RouteHandler {
   [key: string]: (req: Request, ...params: string[]) => Promise<Response>
@@ -14,7 +15,8 @@ const routes: { [key: string]: RouteHandler } = {
   '/auth': authRoutes,
   '/subscriptions': subscriptionRoutes,
   '/mediaid': mediaIdRoutes,
-  '/content': contentRoutes
+  '/content': contentRoutes,
+  '/stripe': stripeRoutes
 }
 
 export async function handleRequest(req: Request): Promise<Response> {
@@ -60,6 +62,9 @@ export async function handleRequest(req: Request): Promise<Response> {
         break
       case '/content':
         response = await routeContent(req, method, subPath)
+        break
+      case '/stripe':
+        response = await routeStripe(req, method, subPath)
         break
       default:
         response = createNotFoundResponse('API endpoint')
@@ -188,6 +193,21 @@ async function routeContent(req: Request, method: string, subPath: string): Prom
   }
   
   return createNotFoundResponse('Content endpoint');
+}
+
+async function routeStripe(req: Request, method: string, subPath: string): Promise<Response> {
+  switch (`${method}:${subPath}`) {
+    case 'post:create-checkout-session':
+      return stripeRoutes.createCheckoutSession(req)
+    case 'post:webhook':
+      return stripeRoutes.handleWebhook(req)
+    case 'post:create-payment-intent':
+      return stripeRoutes.createPaymentIntent(req)
+    case 'post:create-portal-session':
+      return stripeRoutes.createPortalSession(req)
+    default:
+      return createNotFoundResponse('Stripe endpoint')
+  }
 }
 
 // Start the server
